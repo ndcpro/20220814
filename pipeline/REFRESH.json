@@ -1,0 +1,240 @@
+{
+	"name": "REFRESH",
+	"properties": {
+		"activities": [
+			{
+				"name": "Lookup1",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlDWSource",
+						"sqlReaderStoredProcedureName": "[ADF].[proc_etl_refresh_ssas]",
+						"storedProcedureParameters": {
+							"group_name": {
+								"type": "String",
+								"value": "''"
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "UNBWH",
+						"type": "DatasetReference",
+						"parameters": {
+							"schema": "''",
+							"table_name": "''"
+						}
+					},
+					"firstRowOnly": true
+				}
+			},
+			{
+				"name": "Web1",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "Lookup1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": {
+						"value": "@concat('https://',pipeline().parameters.REGION,'.asazure.windows.net/servers/',pipeline().parameters.SERVER,'/models/',pipeline().parameters.MODEL,'/refreshes')",
+						"type": "Expression"
+					},
+					"method": "POST",
+					"body": {
+						"value": "@concat(activity('Lookup1').output.firstRow.AAA)",
+						"type": "Expression"
+					},
+					"authentication": {
+						"type": "MSI",
+						"resource": "https://*.asazure.windows.net"
+					}
+				}
+			},
+			{
+				"name": "Web1_copy1",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "Web1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": {
+						"value": "@concat('https://',pipeline().parameters.REGION,'.asazure.windows.net/servers/',pipeline().parameters.SERVER,'/models/',pipeline().parameters.MODEL,'/refreshes')",
+						"type": "Expression"
+					},
+					"method": "GET",
+					"body": {
+						"Type": "Full",
+						"CommitMode": "transactional",
+						"MaxParallelism": 2,
+						"RetryCount": 2,
+						"Objects": [
+							{
+								"table": "Sales"
+							}
+						]
+					},
+					"authentication": {
+						"type": "MSI",
+						"resource": "https://*.asazure.windows.net"
+					}
+				}
+			},
+			{
+				"name": "Filter1",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "Web1_copy1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@json(activity('Web1_copy1').output.Response)",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@greaterOrEquals(item().startTime,addseconds(activity('Web1').output.startTime,-180))",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Until1",
+				"type": "Until",
+				"dependsOn": [
+					{
+						"activity": "Filter1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@not(equals(activity('Web1_copy2').output.status,'inProgress'))",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Web1_copy2",
+							"type": "WebActivity",
+							"dependsOn": [
+								{
+									"activity": "Wait1",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"url": {
+									"value": "@concat('https://',pipeline().parameters.REGION,'.asazure.windows.net/servers/',pipeline().parameters.SERVER,'/models/',pipeline().parameters.MODEL,'/refreshes/',activity('Filter1').output.Value[0].refreshId)",
+									"type": "Expression"
+								},
+								"method": "GET",
+								"body": {
+									"Type": "Full",
+									"CommitMode": "transactional",
+									"MaxParallelism": 2,
+									"RetryCount": 2,
+									"Objects": [
+										{
+											"table": "Sales"
+										}
+									]
+								},
+								"authentication": {
+									"type": "MSI",
+									"resource": "https://*.asazure.windows.net"
+								}
+							}
+						},
+						{
+							"name": "Wait1",
+							"type": "Wait",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"waitTimeInSeconds": 30
+							}
+						}
+					],
+					"timeout": "7.00:00:00"
+				}
+			}
+		],
+		"parameters": {
+			"REGION": {
+				"type": "string",
+				"defaultValue": "southeastasia"
+			},
+			"SERVER": {
+				"type": "string",
+				"defaultValue": "unbasdev"
+			},
+			"MODEL": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"List_Table": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "AS"
+		},
+		"annotations": [],
+		"lastPublishTime": "2022-05-26T02:42:20Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

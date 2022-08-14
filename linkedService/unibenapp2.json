@@ -1,0 +1,17 @@
+{
+	"name": "unibenapp2",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureFunction",
+		"typeProperties": {
+			"functionAppUrl": "https://unibenapp.azurewebsites.net",
+			"authentication": "Anonymous",
+			"encryptedCredential": "eyJDcmVkZW50aWFsSWQiOiIzZGYwYTg5OC05ZmI1LTRhMGMtOTlmZS02ZjMxMzhjZjljM2UiLCJWZXJzaW9uIjoiMi4wIiwiQ2xhc3NUeXBlIjoiTWljcm9zb2Z0LkRhdGFQcm94eS5Db3JlLkludGVyU2VydmljZURhdGFDb250cmFjdC5DcmVkZW50aWFsU1UwNkNZMTQifQ=="
+		},
+		"connectVia": {
+			"referenceName": "IR-DEV",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

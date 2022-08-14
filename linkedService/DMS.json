@@ -1,0 +1,23 @@
+{
+	"name": "DMS",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "SqlServer",
+		"typeProperties": {
+			"connectionString": "Integrated Security=False;Data Source=10.10.20.50;Initial Catalog=eMobizSTG;User ID=bi_user",
+			"password": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "KVUNB",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "DMS-PW"
+			}
+		},
+		"connectVia": {
+			"referenceName": "IR-DEV",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

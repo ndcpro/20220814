@@ -1,0 +1,62 @@
+{
+	"name": "reverst",
+	"properties": {
+		"activities": [
+			{
+				"name": "copy_to_backup",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "ParquetSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						}
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "Parquet",
+						"type": "DatasetReference",
+						"parameters": {
+							"file_name": "InventoryReport",
+							"folder": "landing/2022/07/21"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "Parquet_copy_folder",
+						"type": "DatasetReference",
+						"parameters": {
+							"folder": "landing/now"
+						}
+					}
+				]
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2022-07-26T03:34:47Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

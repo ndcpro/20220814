@@ -1,0 +1,427 @@
+{
+	"name": "sap_lnd",
+	"properties": {
+		"activities": [
+			{
+				"name": "Lookup1",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlDWSource",
+						"sqlReaderStoredProcedureName": "[ADF].[proc_etl_get_job]",
+						"storedProcedureParameters": {
+							"p_batch_id": {
+								"type": "String",
+								"value": {
+									"value": "@pipeline().parameters.BATCH_ID",
+									"type": "Expression"
+								}
+							},
+							"p_job_id": {
+								"type": "String",
+								"value": {
+									"value": "@pipeline().parameters.JOB_ID",
+									"type": "Expression"
+								}
+							},
+							"p_job_sub_group": {
+								"type": "String",
+								"value": {
+									"value": "@pipeline().parameters.JOB_SUB_GROUP",
+									"type": "Expression"
+								}
+							},
+							"p_order": {
+								"type": "String",
+								"value": null
+							},
+							"group_number": {
+								"type": "String",
+								"value": null
+							},
+							"group_name": {
+								"type": "String",
+								"value": null
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "UNBWH",
+						"type": "DatasetReference",
+						"parameters": {
+							"schema": "''",
+							"table_name": "''"
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "ForEach1",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Lookup1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Lookup1').output.value",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "START_JOB",
+							"type": "SqlServerStoredProcedure",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"storedProcedureName": "[ADF].[proc_etl_log_message]",
+								"storedProcedureParameters": {
+									"p_batch_id": {
+										"value": {
+											"value": "@pipeline().parameters.BATCH_ID",
+											"type": "Expression"
+										},
+										"type": "Int64"
+									},
+									"p_error_code": {
+										"value": "",
+										"type": "String"
+									},
+									"p_error_message": {
+										"value": "",
+										"type": "String"
+									},
+									"p_job_id": {
+										"value": {
+											"value": "@item().JOB_ID",
+											"type": "Expression"
+										},
+										"type": "Int64"
+									},
+									"p_log_message": {
+										"value": {
+											"value": "Start load table @{item().TARGET_TABLE}",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"p_log_status": {
+										"value": "START",
+										"type": "String"
+									}
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "UNBWH",
+								"type": "LinkedServiceReference"
+							}
+						},
+						{
+							"name": "Copy data1",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "START_JOB",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "SapHanaSource",
+									"query": {
+										"value": "@item().JOB_SCRIPT",
+										"type": "Expression"
+									},
+									"partitionOption": "None"
+								},
+								"sink": {
+									"type": "ParquetSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "ParquetWriteSettings"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [
+								{
+									"referenceName": "SAP",
+									"type": "DatasetReference",
+									"parameters": {
+										"schema": "''",
+										"table_name": "''"
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "Parquet",
+									"type": "DatasetReference",
+									"parameters": {
+										"file_name": {
+											"value": "@{item().SOURCE_TABLE}",
+											"type": "Expression"
+										},
+										"folder": {
+											"value": "landing/now",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "END_JOB_SUCCESS",
+							"type": "SqlServerStoredProcedure",
+							"dependsOn": [
+								{
+									"activity": "Copy data",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"storedProcedureName": "[ADF].[proc_etl_log_message]",
+								"storedProcedureParameters": {
+									"p_batch_id": {
+										"value": {
+											"value": "@pipeline().parameters.BATCH_ID",
+											"type": "Expression"
+										},
+										"type": "Int64"
+									},
+									"p_error_code": {
+										"value": "",
+										"type": "String"
+									},
+									"p_error_message": {
+										"value": "",
+										"type": "String"
+									},
+									"p_job_id": {
+										"value": {
+											"value": "@item().JOB_ID",
+											"type": "Expression"
+										},
+										"type": "Int64"
+									},
+									"p_log_message": {
+										"value": {
+											"value": "Finished load table @{item().TARGET_TABLE}",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"p_log_status": {
+										"value": "END",
+										"type": "String"
+									}
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "UNBWH",
+								"type": "LinkedServiceReference"
+							}
+						},
+						{
+							"name": "END_JOB_FAIL",
+							"type": "SqlServerStoredProcedure",
+							"dependsOn": [
+								{
+									"activity": "Copy data1",
+									"dependencyConditions": [
+										"Failed"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"storedProcedureName": "[ADF].[proc_etl_log_message]",
+								"storedProcedureParameters": {
+									"p_batch_id": {
+										"value": {
+											"value": "@pipeline().parameters.BATCH_ID",
+											"type": "Expression"
+										},
+										"type": "Int64"
+									},
+									"p_error_code": {
+										"value": "1",
+										"type": "String"
+									},
+									"p_error_message": {
+										"value": {
+											"value": "@activity('Copy data1').output.errors[0].Message",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"p_job_id": {
+										"value": {
+											"value": "@item().JOB_ID",
+											"type": "Expression"
+										},
+										"type": "Int64"
+									},
+									"p_log_message": {
+										"value": {
+											"value": "Finished load table @{item().TARGET_TABLE}",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"p_log_status": {
+										"value": "ERROR",
+										"type": "String"
+									}
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "UNBWH",
+								"type": "LinkedServiceReference"
+							}
+						},
+						{
+							"name": "Copy data",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "Copy data1",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "ParquetSource",
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true,
+										"enablePartitionDiscovery": false
+									}
+								},
+								"sink": {
+									"type": "ParquetSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "ParquetWriteSettings"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [
+								{
+									"referenceName": "Parquet",
+									"type": "DatasetReference",
+									"parameters": {
+										"file_name": {
+											"value": "@{item().SOURCE_TABLE}",
+											"type": "Expression"
+										},
+										"folder": "landing/now"
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "Parquet_copy_folder",
+									"type": "DatasetReference",
+									"parameters": {
+										"folder": {
+											"value": "landing/@{formatDateTime(addhours(utcnow(),7), 'yyyy')}/@{formatDateTime(addhours(utcnow(),7), 'MM')}/@{formatDateTime(addhours(utcnow(),7), 'dd')}",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"BATCH_ID": {
+				"type": "string",
+				"defaultValue": "1"
+			},
+			"JOB_ID": {
+				"type": "string",
+				"defaultValue": "ALL"
+			},
+			"JOB_SUB_GROUP": {
+				"type": "string",
+				"defaultValue": "SAP"
+			},
+			"JOB_GROUP": {
+				"type": "string",
+				"defaultValue": "LND"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2022-07-12T11:02:58Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

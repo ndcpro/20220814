@@ -1,0 +1,98 @@
+{
+	"name": "call_tcp99",
+	"properties": {
+		"activities": [
+			{
+				"name": "Lookup1",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlDWSource",
+						"sqlReaderQuery": {
+							"value": "SELECT DISTINCT [PLANT_CODE]\nFROM [DWH].[W_D_PLANT]\nWHERE\nPLANT_CODE = @{if(equals(pipeline().parameters.plant,null),'PLANT_CODE',concat('''',pipeline().parameters.plant,''''))}",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "UNBWH",
+						"type": "DatasetReference",
+						"parameters": {
+							"schema": "''",
+							"table_name": "''"
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "ForEach1",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Lookup1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Lookup1').output.value",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "call_tcp99",
+							"type": "AzureFunctionActivity",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"functionName": "calladf",
+								"method": "POST",
+								"body": {
+									"value": "{\"period\":\"@{if(equals(pipeline().parameters.period,null),formatDateTime(addhours(utcnow(),7),'yyyyMM'),pipeline().parameters.period)}\",\"plant_list\":\"['@{item().PLANT_CODE}']\"}\n\n\n\n",
+									"type": "Expression"
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "unibenapp",
+								"type": "LinkedServiceReference"
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"period": {
+				"type": "string",
+				"defaultValue": "202201"
+			},
+			"plant": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2022-06-30T02:53:52Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

@@ -1,0 +1,35 @@
+{
+	"name": "JSON",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "dls",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"folder": {
+				"type": "string"
+			},
+			"file": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@dataset().file",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@dataset().folder",
+					"type": "Expression"
+				},
+				"fileSystem": "dls2fsdev"
+			}
+		},
+		"schema": {}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

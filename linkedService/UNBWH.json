@@ -1,0 +1,19 @@
+{
+	"name": "UNBWH",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureSqlDW",
+		"typeProperties": {
+			"connectionString": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=unbsynapsedev.sql.azuresynapse.net;Initial Catalog=dwhdev;User ID=sqladminuser",
+			"password": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "KVUNB",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "WH-PW"
+			}
+		}
+	}
+}

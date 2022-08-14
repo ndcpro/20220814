@@ -1,0 +1,49 @@
+{
+	"name": "dms_pipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "dms_sde",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "dms_sde",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "dms_sil",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "dms_sde",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "dms_sil",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			}
+		],
+		"parameters": {
+			"BATCH_ID": {
+				"type": "string",
+				"defaultValue": "1"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2022-07-21T04:04:56Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

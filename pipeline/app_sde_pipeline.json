@@ -1,0 +1,67 @@
+{
+	"name": "app_sde_pipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "app_sde_fact",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "app_sde",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"BATCH_ID": {
+							"value": "@pipeline().parameters.BATCH_ID",
+							"type": "Expression"
+						},
+						"JOB_SUB_GROUP": "SDE APP FACT",
+						"RUN_LND": "1",
+						"RUN_SDE": "1"
+					}
+				}
+			},
+			{
+				"name": "app_sde_dim",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "app_sde_fact",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "app_sde",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"BATCH_ID": {
+							"value": "@pipeline().parameters.BATCH_ID",
+							"type": "Expression"
+						},
+						"JOB_SUB_GROUP": "SDE APP DIM",
+						"RUN_LND": "1",
+						"RUN_SDE": "1"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"BATCH_ID": {
+				"type": "string",
+				"defaultValue": "1"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2022-08-12T09:14:23Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}
