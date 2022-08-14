@@ -1,0 +1,9 @@
+{
+	"name": "unbadfprod",
+	"location": "southeastasia",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "4bbc207e-7fc7-401c-b5c3-a43aae72bf6c",
+		"tenantId": "841f82b1-c020-4733-911f-cdde376e187f"
+	}
+}
