@@ -1,0 +1,9 @@
+{
+	"name": "adf-wh-dev",
+	"location": "southeastasia",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "f6a417bd-9654-4589-81d6-aca45c103007",
+		"tenantId": "841f82b1-c020-4733-911f-cdde376e187f"
+	}
+}

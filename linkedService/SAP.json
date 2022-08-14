@@ -1,0 +1,23 @@
+{
+	"name": "SAP",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "SapHana",
+		"typeProperties": {
+			"connectionString": "SERVERNODE=172.16.18.34:30213;UID=PBI_PS4;Driver={HDBODBC};databasename=PS4",
+			"password": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "KVUNB",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "SAP-PW"
+			}
+		},
+		"connectVia": {
+			"referenceName": "IR-DEV",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

@@ -1,0 +1,63 @@
+{
+	"name": "app_sil_pipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "sil_dim",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "sil_group",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"BATCH_ID": {
+							"value": "@pipeline().parameters.BATCH_ID",
+							"type": "Expression"
+						},
+						"JOB_SUB_GROUP": "SIL APP DIM"
+					}
+				}
+			},
+			{
+				"name": "sil_fact",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "sil_dim",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "sil_group",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"BATCH_ID": {
+							"value": "@pipeline().parameters.BATCH_ID",
+							"type": "Expression"
+						},
+						"JOB_SUB_GROUP": "SIL APP FACT"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"BATCH_ID": {
+				"type": "string",
+				"defaultValue": "1"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2022-08-12T09:21:24Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

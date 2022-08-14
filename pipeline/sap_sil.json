@@ -1,0 +1,49 @@
+{
+	"name": "sap_sil",
+	"properties": {
+		"activities": [
+			{
+				"name": "sap_sil_dim",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "sap_sil_dim",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "sap_sil_fac",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "sap_sil_dim",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "sap_sil_fac",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			}
+		],
+		"parameters": {
+			"BATCH_ID": {
+				"type": "string",
+				"defaultValue": "1"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2022-05-26T05:46:55Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

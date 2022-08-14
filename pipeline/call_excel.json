@@ -1,0 +1,89 @@
+{
+	"name": "call_excel",
+	"properties": {
+		"activities": [
+			{
+				"name": "Lookup1",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlDWSource",
+						"sqlReaderQuery": {
+							"value": "select substring([PATH],charindex('/',[PATH])+1,len([PATH])-charindex('/',[PATH])) re_file,min(LAST_EXTRACT_DATE) LAST_EXTRACT_DATE,max(PRUNE_DAYS) PRUNE_DAYS from [ADF].[ETL_JOB] where path like 'excel%' group by substring([PATH],charindex('/',[PATH])+1,len([PATH])-charindex('/',[PATH]))",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "UNBWH",
+						"type": "DatasetReference",
+						"parameters": {
+							"schema": "''",
+							"table_name": "''"
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "ForEach1",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Lookup1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Lookup1').output.value",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Azure Function1",
+							"type": "AzureFunctionActivity",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"functionName": "excel",
+								"method": "POST",
+								"body": {
+									"value": "{\n    \"re_file\" : \"@{item().re_file}\",\n    \"last_extract_date\" : \"@{item().LAST_EXTRACT_DATE}\",\n    \"prune_date\" : \"@{item().PRUNE_DAYS}\"\n}",
+									"type": "Expression"
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "unibenapp",
+								"type": "LinkedServiceReference"
+							}
+						}
+					]
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2022-06-30T07:19:08Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

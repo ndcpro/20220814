@@ -1,0 +1,16 @@
+{
+	"name": "BIDB",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "SqlServer",
+		"typeProperties": {
+			"connectionString": "integrated security=False;data source=172.17.50.41,1833;initial catalog=BI_DW;user id=tc",
+			"encryptedCredential": "eyJDcmVkZW50aWFsSWQiOiJkYzRlODJiZC1hMzlhLTRjN2EtOGFlNi0yZWMzNTk4NDU0M2QiLCJWZXJzaW9uIjoiMi4wIiwiQ2xhc3NUeXBlIjoiTWljcm9zb2Z0LkRhdGFQcm94eS5Db3JlLkludGVyU2VydmljZURhdGFDb250cmFjdC5DcmVkZW50aWFsU1UwNkNZMTQifQ=="
+		},
+		"connectVia": {
+			"referenceName": "IR-DEV",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}
